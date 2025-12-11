@@ -19,11 +19,20 @@
 
 ## 🚀 快速开始
 
-### 在线运行
+### 方式 1：直接打开（推荐）
 
-直接双击打开 `index.html` 文件，在浏览器中即可运行游戏！
+直接双击打开 `index-standalone.html` 文件，在浏览器中即可运行游戏！
+这是一个无需任何依赖的纯JavaScript版本。
 
-### 本地服务器运行（推荐）
+### 方式 2：使用启动脚本
+
+```bash
+./start.sh
+```
+
+然后在浏览器中访问 `http://localhost:8000/index-standalone.html`
+
+### 方式 3：手动启动服务器
 
 使用 Python 启动本地服务器：
 
@@ -35,7 +44,9 @@ python -m http.server 8000
 python -m SimpleHTTPServer 8000
 ```
 
-然后在浏览器中访问 `http://localhost:8000`
+然后在浏览器中访问：
+- **推荐**: `http://localhost:8000/index-standalone.html` (无需CDN的纯JavaScript版本)
+- 或: `http://localhost:8000/index.html` (Phaser版本，需要CDN连接)
 
 ### 使用 Node.js
 
@@ -51,17 +62,23 @@ http-server -p 8000
 
 ```
 healing-game/
-├── index.html              # 游戏入口文件
+├── index-standalone.html   # 独立版游戏（推荐，无需依赖）
+├── index.html              # Phaser版游戏入口
+├── start.sh               # 启动脚本
 ├── src/
-│   ├── game.js            # 游戏配置和初始化
+│   ├── game.js            # 游戏配置和初始化（Phaser版）
 │   ├── scenes/
-│   │   └── MainScene.js   # 主游戏场景
+│   │   └── MainScene.js   # 主游戏场景（Phaser版）
 │   ├── managers/
-│   │   ├── StoryManager.js   # 故事流程管理
-│   │   └── UIManager.js      # UI界面管理
+│   │   ├── StoryManager.js   # 故事流程管理（Phaser版）
+│   │   └── UIManager.js      # UI界面管理（Phaser版）
 │   └── assets/            # 资源文件夹（可选）
 └── README.md
 ```
+
+**注意**: 项目提供两个版本：
+- `index-standalone.html`: 纯JavaScript版本，使用HTML5 Canvas，无需任何外部依赖
+- `index.html`: Phaser 3版本，需要从CDN加载Phaser库
 
 ## 🎭 游戏流程
 
