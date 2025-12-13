@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>棉棉的治愈故事 - Healing Story Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to bottom, #ffcc99 0%, #ffddbb 70%, #99cc99 100%);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    
+    <script>
+        // Game state and configuration
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const game = {
+            currentNode: 1,
+            isInEnding: false,
+            windmillRotation: 0,
+            windmillSpeed: 0.02,
+            pandaBlink: 0,
+            pandaBreath: 0,
+            buttons: [],
+            textLines: [],
+            currentLineIndex: 0,
+            showPaper: false,
+            paperAlpha: 0,
+            countdownTimer: 0,
+            countdownActive: false,
+            animationFrame: null
+        };
+
+        // Story data
+        const storyData = {
+            node1: {
+                id: 1,
+                text: [
+                    "棉棉最近很迷茫。",
+                    "她想做很多事，却总是在心里想：",
+                    "\"要是失败了怎么办？\""
+                ],
+                buttons: [
+                    { text: "下一步", action: "next" }
+                ]
+            },
+            node2: {
+                id: 2,
+                text: [
+                    "棉棉：\"你也觉得我想太多了，是吗？\"",
+                    "风车快速旋转，像在说：",
+                    "\"对！你终于发现问题了！\""
+                ],
+                buttons: [
+                    { text: "下一步", action: "next" }
+                ],
+                interaction: "windmill"
+            },
+            node3: {
+                id: 3,
+                text: [
+                    "棉棉明白了——",
+                    "迷茫不是没有方向，",
+                    "是想太多、做太少。"
+                ],
+                buttons: [
+                    { text: "帮棉棉写下目标", action: "help" },
+                    { text: "让她继续迷茫", action: "funny" }
+                ]
+            },
+            node4: {
+                id: 4,
+                text: [
+                    "棉棉拿起纸和笔，",
+                    "决定先做五分钟试试。"
+                ],
+                buttons: [
+                    { text: "开始行动", action: "action" }
+                ],
+                interaction: "paper"
+            },
+            endings: {
+                healing: [
+                    "棉棉坚持了五分钟，",
+                    "结果一口气做了十五分钟。",
+                    "\"原来开始比想象中简单。\""
+                ],
+                funny: [
+                    "做到一半棉棉睡着了。",
+                    "风车\"啪！\"地转了一下，",
+                    "像在鼓掌。"
+                ],
+                growth: [
+                    "五分钟的小行动，",
+                    "让棉棉慢慢走出迷茫。",
+                    "\"方向是脑子决定的，",
+                    "未来是脚走出来的。\""
+                ],
+                funnyChoice: [
+                    "棉棉决定继续迷茫。",
+                    "风车停止了旋转，",
+                    "好像也累了。",
+                    "（也许明天会好一点吧……）"
+                ]
+            }
+        };
+
+        // Drawing functions
+        function drawBackground() {
+            // Sky gradient (already in canvas background)
+            
+            // Sun
+            ctx.fillStyle = 'rgba(255, 170, 102, 0.8)';
+            ctx.beginPath();
+            ctx.arc(700, 100, 60, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ground
+            ctx.fillStyle = '#99cc99';
+            ctx.fillRect(0, 500, 800, 100);
+        }
+
+        function drawPanda() {
+            const x = 250;
+            const y = 420;
+            const breathOffset = Math.sin(game.pandaBreath) * 2;
+            
+            // Body
+            ctx.fillStyle = '#333333';
+            ctx.beginPath();
+            ctx.ellipse(x, y + breathOffset, 40, 50, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Head
+            ctx.fillStyle = '#eeeeee';
+            ctx.beginPath();
+            ctx.arc(x, y - 60 + breathOffset, 50, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Ears
+            ctx.fillStyle = '#333333';
+            ctx.beginPath();
+            ctx.arc(x - 30, y - 85 + breathOffset, 20, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + 30, y - 85 + breathOffset, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Eyes
+            const blinkFactor = Math.max(0, 1 - game.pandaBlink * 10);
+            ctx.fillStyle = '#333333';
+            ctx.beginPath();
+            ctx.ellipse(x - 15, y - 65 + breathOffset, 12, 15 * blinkFactor, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.ellipse(x + 15, y - 65 + breathOffset, 12, 15 * blinkFactor, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupils
+            if (blinkFactor > 0.5) {
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(x - 15, y - 60 + breathOffset, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(x + 15, y - 60 + breathOffset, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Nose
+            ctx.fillStyle = '#333333';
+            ctx.beginPath();
+            ctx.ellipse(x, y - 50 + breathOffset, 6, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawWindmill() {
+            const x = 550;
+            const y = 400;
+            
+            ctx.save();
+            
+            // Pole
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(x - 5, y + 40, 10, 80);
+            
+            // Rotate blades
+            ctx.translate(x, y);
+            ctx.rotate(game.windmillRotation);
+            
+            // Blades
+            ctx.fillStyle = '#ff6666';
+            ctx.fillRect(-5, -50, 10, 50);
+            ctx.fillRect(-5, 0, 10, 50);
+            ctx.fillStyle = '#ff8888';
+            ctx.fillRect(-50, -5, 50, 10);
+            ctx.fillRect(0, -5, 50, 10);
+            
+            ctx.restore();
+            
+            // Center circle (clickable area)
+            ctx.fillStyle = '#ffaa66';
+            ctx.beginPath();
+            ctx.arc(x, y, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Store windmill position for click detection
+            game.windmillPos = { x, y, radius: 20 };
+        }
+
+        function drawPaper() {
+            if (game.paperAlpha > 0) {
+                const x = 400;
+                const y = 300;
+                
+                ctx.save();
+                ctx.globalAlpha = game.paperAlpha;
+                
+                // Paper
+                ctx.fillStyle = '#ffffee';
+                ctx.strokeStyle = '#cccccc';
+                ctx.lineWidth = 2;
+                ctx.fillRect(x - 75, y - 100, 150, 200);
+                ctx.strokeRect(x - 75, y - 100, 150, 200);
+                
+                // Lines
+                ctx.strokeStyle = '#cccccc';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 4; i++) {
+                    const lineY = y - 40 + i * 20;
+                    ctx.beginPath();
+                    ctx.moveTo(x - 60, lineY);
+                    ctx.lineTo(x + 60, lineY);
+                    ctx.stroke();
+                }
+                
+                // Pen
+                ctx.fillStyle = '#4444ff';
+                ctx.save();
+                ctx.translate(x + 50, y + 50);
+                ctx.rotate(Math.PI / 4);
+                ctx.fillRect(-4, -25, 8, 50);
+                ctx.restore();
+                
+                ctx.restore();
+            }
+        }
+
+        function drawTextBox() {
+            // Text box background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 4;
+            ctx.fillRect(30, 380, 740, 200);
+            ctx.strokeRect(30, 380, 740, 200);
+            
+            // Text content
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '20px Arial, Microsoft YaHei, sans-serif';
+            let textY = 420;
+            
+            if (game.countdownActive) {
+                ctx.fillText(`开始行动中... ${game.countdownTimer}秒`, 50, textY);
+            } else {
+                for (let i = 0; i < game.textLines.length && i < game.currentLineIndex; i++) {
+                    ctx.fillText(game.textLines[i], 50, textY);
+                    textY += 30;
+                }
+            }
+        }
+
+        function drawButtons() {
+            game.buttons.forEach((btn, index) => {
+                ctx.fillStyle = btn.hover ? '#ffaa77' : '#ff9966';
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                
+                ctx.fillRect(btn.x - 90, btn.y - 25, 180, 50);
+                ctx.strokeRect(btn.x - 90, btn.y - 25, 180, 50);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '18px Arial, Microsoft YaHei, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(btn.text, btn.x, btn.y);
+            });
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            drawPanda();
+            drawWindmill();
+            drawPaper();
+            drawTextBox();
+            drawButtons();
+        }
+
+        function update() {
+            // Update animations
+            game.windmillRotation += game.windmillSpeed;
+            game.pandaBreath += 0.02;
+            
+            // Blink animation
+            if (Math.random() < 0.01) {
+                game.pandaBlink = 0.5;
+            }
+            if (game.pandaBlink > 0) {
+                game.pandaBlink -= 0.05;
+            }
+            
+            // Paper fade in/out
+            if (game.showPaper && game.paperAlpha < 1) {
+                game.paperAlpha += 0.05;
+            } else if (!game.showPaper && game.paperAlpha > 0) {
+                game.paperAlpha -= 0.05;
+            }
+            
+            draw();
+            game.animationFrame = requestAnimationFrame(update);
+        }
+
+        // Display text gradually
+        function displayText(lines) {
+            game.textLines = lines;
+            game.currentLineIndex = 0;
+            
+            const interval = setInterval(() => {
+                game.currentLineIndex++;
+                if (game.currentLineIndex > lines.length) {
+                    clearInterval(interval);
+                }
+            }, 800);
+        }
+
+        // Create buttons
+        function createButtons(buttonData) {
+            const buttonY = 540;
+            const buttonCount = buttonData.length;
+            const spacing = 200;
+            const startX = (800 - (buttonCount - 1) * spacing) / 2;
+            
+            game.buttons = buttonData.map((btn, index) => ({
+                text: btn.text,
+                action: btn.action,
+                x: startX + index * spacing,
+                y: buttonY,
+                hover: false
+            }));
+        }
+
+        // Handle click
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check windmill click
+            if (game.windmillPos) {
+                const dx = x - game.windmillPos.x;
+                const dy = y - game.windmillPos.y;
+                if (dx * dx + dy * dy < game.windmillPos.radius * game.windmillPos.radius) {
+                    game.windmillSpeed = 0.3;
+                    setTimeout(() => { game.windmillSpeed = 0.02; }, 500);
+                    return;
+                }
+            }
+            
+            // Check button clicks
+            game.buttons.forEach(btn => {
+                if (x >= btn.x - 90 && x <= btn.x + 90 &&
+                    y >= btn.y - 25 && y <= btn.y + 25) {
+                    handleAction(btn.action);
+                }
+            });
+        });
+
+        // Handle hover
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            let hovering = false;
+            game.buttons.forEach(btn => {
+                btn.hover = (x >= btn.x - 90 && x <= btn.x + 90 &&
+                           y >= btn.y - 25 && y <= btn.y + 25);
+                if (btn.hover) hovering = true;
+            });
+            
+            // Check windmill hover
+            if (game.windmillPos) {
+                const dx = x - game.windmillPos.x;
+                const dy = y - game.windmillPos.y;
+                if (dx * dx + dy * dy < game.windmillPos.radius * game.windmillPos.radius) {
+                    hovering = true;
+                }
+            }
+            
+            canvas.style.cursor = hovering ? 'pointer' : 'default';
+        });
+
+        // Handle actions
+        function handleAction(action) {
+            if (action === 'restart') {
+                game.currentNode = 1;
+                game.isInEnding = false;
+                game.showPaper = false;
+                game.countdownActive = false;
+                startNode();
+                return;
+            }
+            
+            if (action === 'next') {
+                game.currentNode++;
+                startNode();
+            } else if (action === 'help') {
+                game.currentNode = 4;
+                startNode();
+            } else if (action === 'funny') {
+                showEnding('funnyChoice');
+            } else if (action === 'action') {
+                showCountdown();
+            }
+        }
+
+        // Start a node
+        function startNode() {
+            const node = storyData[`node${game.currentNode}`];
+            if (!node) return;
+            
+            // Handle paper visibility
+            game.showPaper = (node.interaction === 'paper');
+            
+            // Display text and buttons
+            displayText(node.text);
+            setTimeout(() => {
+                createButtons(node.buttons);
+            }, node.text.length * 800 + 500);
+        }
+
+        // Show countdown
+        function showCountdown() {
+            game.buttons = [];
+            game.countdownActive = true;
+            game.countdownTimer = 5;
+            
+            const interval = setInterval(() => {
+                game.countdownTimer--;
+                if (game.countdownTimer <= 0) {
+                    clearInterval(interval);
+                    game.countdownActive = false;
+                    const endings = ['healing', 'funny', 'growth'];
+                    const randomEnding = endings[Math.floor(Math.random() * endings.length)];
+                    showEnding(randomEnding);
+                }
+            }, 1000);
+        }
+
+        // Show ending
+        function showEnding(endingName) {
+            game.isInEnding = true;
+            const ending = storyData.endings[endingName];
+            
+            displayText(ending);
+            setTimeout(() => {
+                createButtons([{ text: "重新开始", action: "restart" }]);
+            }, ending.length * 800 + 500);
+            
+            // Special effect for funny ending
+            if (endingName === 'funny') {
+                setTimeout(() => {
+                    game.windmillSpeed = 0.3;
+                    setTimeout(() => { game.windmillSpeed = 0.02; }, 500);
+                }, 1500);
+            }
+        }
+
+        // Start the game
+        startNode();
+        update();
+    </script>
+</body>
+</html>

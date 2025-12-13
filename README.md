@@ -1,1 +1,199 @@
-# healing-game
+# 🌸 棉棉的治愈故事 - Healing Story Game
+
+一个温暖治愈的互动故事游戏，帮助主角棉棉走出迷茫。
+
+## 🎮 游戏简介
+
+这是一个基于 Phaser 3 的轻度互动剧情游戏。玩家通过点击风车、选择行动，引导主角棉棉从"迷茫状态"迈向"行动状态"，最终获得随机治愈结局。
+
+**游戏时长**: 2-4 分钟  
+**核心体验**: 简单点击 + 选择分支 + 随机结局
+
+## 🌟 游戏特色
+
+- 📖 温暖治愈的故事情节
+- 🎨 手绘风格的视觉效果
+- 🔀 多种随机结局
+- 💫 流畅的动画效果
+- 🎵 简洁的交互体验
+
+## 🚀 快速开始
+
+### 方式 1：直接打开（推荐）
+
+直接双击打开 `index-standalone.html` 文件，在浏览器中即可运行游戏！
+这是一个无需任何依赖的纯JavaScript版本。
+
+### 方式 2：使用启动脚本
+
+```bash
+./start.sh
+```
+
+然后在浏览器中访问 `http://localhost:8000/index-standalone.html`
+
+### 方式 3：手动启动服务器
+
+使用 Python 启动本地服务器：
+
+```bash
+# Python 3
+python -m http.server 8000
+
+# 或 Python 2
+python -m SimpleHTTPServer 8000
+```
+
+然后在浏览器中访问：
+- **推荐**: `http://localhost:8000/index-standalone.html` (无需CDN的纯JavaScript版本)
+- 或: `http://localhost:8000/index.html` (Phaser版本，需要CDN连接)
+
+### 使用 Node.js
+
+```bash
+# 安装 http-server
+npm install -g http-server
+
+# 启动服务器
+http-server -p 8000
+```
+
+## 📁 项目结构
+
+```
+healing-game/
+├── index-standalone.html   # 独立版游戏（推荐，无需依赖）
+├── index.html              # Phaser版游戏入口
+├── start.sh               # 启动脚本
+├── src/
+│   ├── game.js            # 游戏配置和初始化（Phaser版）
+│   ├── scenes/
+│   │   └── MainScene.js   # 主游戏场景（Phaser版）
+│   ├── managers/
+│   │   ├── StoryManager.js   # 故事流程管理（Phaser版）
+│   │   └── UIManager.js      # UI界面管理（Phaser版）
+│   └── assets/            # 资源文件夹（可选）
+└── README.md
+```
+
+**注意**: 项目提供两个版本：
+- `index-standalone.html`: 纯JavaScript版本，使用HTML5 Canvas，无需任何外部依赖
+- `index.html`: Phaser 3版本，需要从CDN加载Phaser库
+
+## 🎭 游戏流程
+
+### Node 1: 开场
+棉棉陷入迷茫，害怕失败。
+
+### Node 2: 风车互动
+点击风车，让它快速旋转，象征"行动的推动力"。
+
+### Node 3: 觉醒
+棉棉明白：迷茫是想太多、做太少。  
+**选择分支**:
+- 帮棉棉写下目标 → 进入行动
+- 让她继续迷茫 → 搞笑结局
+
+### Node 4: 行动任务
+模拟五分钟的行动倒计时。
+
+### Node 5: 随机结局
+- 🌟 **治愈版**: 坚持十五分钟，原来开始很简单
+- 😴 **幽默版**: 做到一半睡着了，风车为她鼓掌
+- 🌱 **成长版**: 小行动带来大改变
+
+## 🛠️ 技术栈
+
+- **游戏引擎**: Phaser 3.55.2
+- **语言**: JavaScript (ES6+)
+- **架构模式**: 
+  - Scene 场景系统
+  - Manager 管理器模式
+  - State Machine 状态机
+
+## 🎨 核心模块
+
+### StoryManager（故事管理器）
+- 管理所有故事内容和流程
+- 实现状态机逻辑
+- 处理分支选择和随机结局
+
+### UIManager（UI管理器）
+- 文本逐行显示
+- 按钮创建和交互
+- 视觉效果和动画
+
+### MainScene（主场景）
+- 游戏场景渲染
+- 交互元素（风车、棉棉、纸笔）
+- 动画效果（呼吸、眨眼、旋转）
+
+## 🎯 游戏特性
+
+### 交互元素
+- ✅ 可点击的风车（加速旋转动画）
+- ✅ 角色呼吸和眨眼动画
+- ✅ 纸笔出现动画
+- ✅ 按钮悬停和点击效果
+
+### 视觉效果
+- 🌅 温暖的夕阳色调
+- 🎨 简洁的几何图形风格
+- 💫 流畅的 Tween 动画
+- 🎭 动态场景元素
+
+## 📝 自定义修改
+
+### 修改故事内容
+
+编辑 `src/managers/StoryManager.js` 中的 `initializeStoryData()` 方法：
+
+```javascript
+node1: {
+    text: [
+        "你的故事第一行",
+        "你的故事第二行"
+    ],
+    buttons: [...]
+}
+```
+
+### 修改视觉样式
+
+编辑 `src/scenes/MainScene.js` 中的创建方法：
+- `createBackground()` - 修改背景颜色
+- `createPanda()` - 修改角色外观
+- `createWindmill()` - 修改风车样式
+
+### 修改UI样式
+
+编辑 `src/managers/UIManager.js` 中的样式配置：
+- 文本框颜色和大小
+- 按钮样式和位置
+- 字体和字号
+
+## 🌈 未来扩展
+
+可以添加的功能：
+- 🎵 背景音乐和音效
+- 🖼️ 更丰富的图像资源
+- 📊 数据持久化（记录玩家选择）
+- 🌍 多语言支持
+- 📱 移动端优化
+- 🎮 更多互动元素
+
+## 📄 许可证
+
+MIT License
+
+## 🤝 贡献
+
+欢迎提交 Issue 和 Pull Request！
+
+## 💖 致谢
+
+这个游戏基于故事《风把答案推了一下》创作，希望能给每个迷茫的人带来一点温暖和力量。
+
+---
+
+**记住**: 方向是脑子决定的，未来是脚走出来的。✨
